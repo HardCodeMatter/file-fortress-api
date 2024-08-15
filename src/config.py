@@ -17,9 +17,14 @@ class Settings(BaseSettings):
     DATABASE_ECHO: bool
     DATABASE_POOL_SIZE: int
 
+    AUTH_SECRET_KEY: str
+    AUTH_ALGORITHM: str
+    AUTH_ACCESS_TOKEN_EXPIRE_MINUTES: int
+    AUTH_REFRESH_TOKEN_EXPIRE_DAYS: int
+
     @property
     def DATABASE_URL(self) -> str:
-        return f'postgresql+asyncpg://{self.DATABASE_HOST}:{self.DATABASE_PORT}@{self.DATABASE_USER}:{self.DATABASE_PASS}/{self.DATABASE_NAME}?async_fallback=True'
+        return f'postgresql+asyncpg://{self.DATABASE_USER}:{self.DATABASE_PASS}@{self.DATABASE_HOST}:{self.DATABASE_PORT}/{self.DATABASE_NAME}?async_fallback=True'
 
     model_config = SettingsConfigDict(
         env_file='.env',

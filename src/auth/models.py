@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Mapped, mapped_column
 
-from src.database import Base
-from src.models import IDMixin, TimestampMixin
+from database import Base
+from models import IDMixin, TimestampMixin
 
 
 class User(IDMixin, TimestampMixin, Base):
@@ -11,6 +11,8 @@ class User(IDMixin, TimestampMixin, Base):
     email: Mapped[str] = mapped_column(unique=True, index=True, nullable=False)
     first_name: Mapped[str]
     last_name: Mapped[str]
+
+    hashed_password: Mapped[str]
 
     is_active: Mapped[bool] = mapped_column(default=True)
     is_verified: Mapped[bool] = mapped_column(default=False)

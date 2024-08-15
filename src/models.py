@@ -1,5 +1,6 @@
 import uuid
 from datetime import datetime
+
 from sqlalchemy import func
 from sqlalchemy.orm import declarative_mixin, Mapped, mapped_column
 
