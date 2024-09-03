@@ -105,7 +105,54 @@ class TestUsers:
         )
 
         assert response.status_code == 200
-        print('USER IS AUTHORIZED SUCCESSFUL.')
         assert 'access_token' in response.json()
         assert 'refresh_token' in response.json()
         assert 'token_type' in response.json()
+
+    async def test_user_login_with_wrong_username(self, async_client: AsyncClient):
+        user_data = {
+            'username': 'roman',
+            'password': 'roman123',
+            'grand_type': 'password',
+        }
+
+        response = await async_client.post(
+            '/auth/login',
+            data=user_data,
+            headers={'Content-Type': 'application/x-www-form-urlencoded'},
+        )
+
+        assert response.status_code == 401
+        assert response.json()['detail'] == 'Incorrect username or password.'
+
+    async def test_user_login_with_wrong_password(self, async_client: AsyncClient):
+        user_data = {
+            "username": "king",
+            "email": "king@fortress.com",
+            "first_name": "King",
+            "last_name": "Pirates",
+            "hashed_password": "king123",
+        }
+
+        response = await async_client.post(
+            '/auth/register',
+            json=user_data,
+        )
+
+        assert response.status_code == 201
+        assert response.json()['username'] == 'king'
+
+        user_data = {
+            'username': 'king',
+            'password': 'kingsman',
+            'grand_type': 'password',
+        }
+
+        response = await async_client.post(
+            '/auth/login',
+            data=user_data,
+            headers={'Content-Type': 'application/x-www-form-urlencoded'},
+        )
+
+        assert response.status_code == 401
+        assert response.json()['detail'] == 'Incorrect username or password.'

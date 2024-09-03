@@ -16,12 +16,12 @@ async def event_loop():
 @pytest.fixture(scope='function', autouse=True)
 async def setup_database():
     async with async_engine.begin() as connection:
-        await connection.run_sync(Base.metadata.create_all)
-
-    yield
+        await connection.run_sync(Base.metadata.drop_all)
 
     async with async_engine.begin() as connection:
-        await connection.run_sync(Base.metadata.drop_all)
+        await connection.run_sync(Base.metadata.create_all)
+
+    # yield
 
 
 @pytest.fixture(scope='session')
