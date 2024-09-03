@@ -7,7 +7,7 @@ from sqlalchemy.orm import declarative_mixin, Mapped, mapped_column
 
 @declarative_mixin
 class IDMixin:
-    id: Mapped[str] = mapped_column(primary_key=True, index=True, default=str(uuid.uuid4()))
+    id: Mapped[str] = mapped_column(primary_key=True, index=True, default=lambda: str(uuid.uuid4()))
 
 
 @declarative_mixin

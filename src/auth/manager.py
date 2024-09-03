@@ -36,7 +36,7 @@ def create_access_token(data: dict) -> str:
 
 
 def create_refresh_token(data: dict) -> str:
-    to_encode: dict = data.copy
+    to_encode: dict = data.copy()
     expire: datetime = datetime.utcnow() + timedelta(days=settings.AUTH_REFRESH_TOKEN_EXPIRE_DAYS)
 
     to_encode.update({'exp': expire})
