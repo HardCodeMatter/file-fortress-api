@@ -7,12 +7,11 @@ from .manager import authenticate_user, create_access_token, create_refresh_toke
 from .models import User
 from .schemas import Token, UserCreate, UserRead
 from . import service
+from .utils import get_current_active_user
 from config import settings
 from database import get_async_session
 
-
 router: APIRouter = APIRouter(
-    prefix='',
     tags=['Authentication'],
 )
 
@@ -88,10 +87,26 @@ async def refresh_tokens(
 
 @router.post('/auth/logout', status_code=status.HTTP_200_OK)
 async def logout(response: Response = Response()) -> dict:
-
     response.delete_cookie(key='access_token')
     response.delete_cookie(key='refresh_token')
 
     return {
         'detail': 'Logout successful.'
     }
+
+
+@router.get('/users', status_code=status.HTTP_200_OK)
+async def get_user_by_username(
+    username: str,
+    session: AsyncSession = Depends(get_async_session),
+    current_user: User = Depends(get_current_active_user),
+) -> UserRead:
+    user: User = await service.UserService(session).get_user_by_username(username)
+
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail='User not found.',
+        )
+
+    return user

@@ -1,6 +1,5 @@
 import jwt
-from fastapi import Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordBearer
+from fastapi import Depends, Request, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from jwt.exceptions import InvalidTokenError
 from passlib.context import CryptContext
@@ -13,7 +12,6 @@ from config import settings
 
 
 password_context = CryptContext(schemes=['bcrypt'], deprecated='auto')
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl='token')
 
 
 def hash_password(password: str) -> str:
@@ -25,7 +23,7 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
 
 
 async def get_current_user(
-    token: str = Depends(oauth2_scheme),
+    request: Request = Request,
     session: AsyncSession = Depends(get_async_session)
 ) -> User:
     credentials_exception = HTTPException(
@@ -34,11 +32,14 @@ async def get_current_user(
         headers={'WWW-Authenticate': 'Bearer'},
     )
 
+    access_token = request.cookies.get('access_token')
+
     try:
         payload = jwt.decode(
-            token=token,
+            access_token,
+            verify=True,
             key=settings.AUTH_SECRET_KEY,
-            algorithms=settings.AUTH_ALGORITHM,
+            algorithms=[settings.AUTH_ALGORITHM],
         )
 
         username = payload.get('sub')
@@ -48,9 +49,12 @@ async def get_current_user(
 
         token_data = TokenData(username=username)
     except InvalidTokenError:
-        raise credentials_exception
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail='You are not authorized.',
+        )
 
-    user: User = service.UserService(session).get_user_by_username(token_data.username)
+    user: User = await service.UserService(session).get_user_by_username(token_data.username)
 
     if not user:
         raise credentials_exception

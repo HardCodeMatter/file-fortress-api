@@ -1,7 +1,7 @@
 from httpx import AsyncClient
 
 
-class TestUserRegister:
+class TestAuthRegister:
     async def test_user_register(self, async_client: AsyncClient):
         user_data = {
             "username": "glitch",
@@ -76,7 +76,7 @@ class TestUserRegister:
         assert response.json()['detail'] == "User with this email is already exist."
 
 
-class TestUserLogin:
+class TestAuthLogin:
     async def test_user_login(self, async_client: AsyncClient):
         user_data = {
             "username": "master",
