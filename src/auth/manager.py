@@ -47,3 +47,19 @@ def create_refresh_token(data: dict) -> str:
     )
 
     return encoded_jwt
+
+
+def decode_refresh_token(token: str) -> dict:
+    try:
+        payload = jwt.decode(
+            token,
+            key=settings.AUTH_SECRET_KEY,
+            algorithms=[settings.AUTH_ALGORITHM],
+        )
+
+        return payload
+    except jwt.PyJWTError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail='Refresh token is invalid.',
+        )
