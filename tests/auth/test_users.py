@@ -35,3 +35,27 @@ class TestUsers:
 
         assert response.status_code == 404
         assert response.json()['detail'] == 'User not found.'
+
+    async def test_user_password_validation(self, async_client: AsyncClient, user_password_validation_list: list):
+        for data, expected_status, expected_detail in user_password_validation_list:
+            response = await async_client.post(
+                '/auth/register',
+                json=data,
+            )
+
+            assert response.status_code == expected_status
+
+            if 'detail' in response.json():
+                assert response.json()['detail'] == expected_detail
+
+    async def test_user_name_validation(self, async_client: AsyncClient, user_name_validation_list: list):
+        for data, expected_status, expected_detail in user_name_validation_list:
+            response = await async_client.post(
+                '/auth/register',
+                json=data,
+            )
+
+            assert response.status_code == expected_status
+
+            if 'detail' in response.json():
+                assert response.json()['detail'] == expected_detail
