@@ -5,9 +5,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from .manager import authenticate_user, create_access_token, create_refresh_token, decode_refresh_token
 from .models import User
-from .schemas import Token, UserCreate, UserRead
+from .schemas import Token, UserCreate, UserRead, ChangeUserPassword
 from . import service
-from .utils import get_current_active_user
+from .utils import get_current_active_user, get_current_user
 from config import settings
 from database import get_async_session
 
@@ -49,6 +49,15 @@ async def register(
     session: AsyncSession = Depends(get_async_session),
 ) -> UserRead:
     return await service.UserService(session).create_user(user_data)
+
+
+@router.post('/auth/change-password', status_code=status.HTTP_200_OK)
+async def change_password(
+    password_data: ChangeUserPassword,
+    session: AsyncSession = Depends(get_async_session),
+    current_user: User = Depends(get_current_user)
+) -> dict[str, str]:
+    return await service.UserService(session).change_user_password(current_user.username, password_data)
 
 
 @router.post('/auth/refresh', status_code=status.HTTP_200_OK)

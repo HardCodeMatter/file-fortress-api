@@ -2,7 +2,7 @@ import re
 from datetime import datetime
 
 from fastapi import HTTPException, status
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel, ValidationInfo, field_validator
 
 
 class Token(BaseModel):
@@ -114,3 +114,39 @@ class UserRead(UserBase):
     id: str
     created_at: datetime
     updated_at: datetime
+
+
+class ChangeUserPassword(BaseModel):
+    old_password: str
+    new_password: str
+
+    @field_validator('new_password')
+    @classmethod
+    def validate_new_password(cls, value: str, info: ValidationInfo) -> str:
+        pattern: str = r"^(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,}$"
+
+        if ' ' in value.strip():
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail='Password cannot contain spaces.',
+            )
+
+        if len(value.strip()) < 8 or len(value.strip()) > 32:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail='Password must be between 8 and 32 characters in length, inclusive.',
+            )
+
+        if not re.match(pattern, value.strip()):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail='Password must contain at least one uppercase letter, one lowercase letter, and one number.',
+            )
+
+        if 'old_password' in info.data and value == info.data['old_password']:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail='New password must be different from the old password.',
+            )
+
+        return value.strip()

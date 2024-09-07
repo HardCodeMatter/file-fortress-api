@@ -2,8 +2,8 @@ from fastapi import HTTPException, status
 from sqlalchemy import select, Select
 
 from .models import User
-from .schemas import UserCreate
-from .utils import hash_password
+from .schemas import UserCreate, ChangeUserPassword
+from .utils import hash_password, verify_password
 from service import BaseService
 
 
@@ -38,9 +38,28 @@ class UserService(BaseService):
 
     async def get_user_by_username(self, username: str) -> User:
         stmt = select(User).filter(User.username == username)
-
         user: User = (await self.session.execute(stmt)).scalar()
 
         await self.session.commit()
 
         return user
+
+    async def change_user_password(self, username: str, password_data: ChangeUserPassword) -> dict[str, str]:
+        stmt = select(User).filter(User.username == username)
+        user: User = (await self.session.execute(stmt)).scalar()
+
+        if not verify_password(password_data.old_password, user.hashed_password):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail='Old password is incorrect.',
+            )
+
+        hashed_password = hash_password(password_data.new_password)
+        user.hashed_password = hashed_password
+
+        self.session.add(user)
+        await self.session.commit()
+
+        return {
+            'detail': 'Password changed successfully.'
+        }

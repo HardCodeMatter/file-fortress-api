@@ -1,5 +1,7 @@
 from httpx import AsyncClient
 
+from tests.auth.conftest import user_data_login
+
 
 class TestAuthRegister:
     async def test_user_register(self, async_client: AsyncClient):
@@ -158,3 +160,33 @@ class TestAuthLogin:
 
         assert response.status_code == 401
         assert response.json()['detail'] == 'Incorrect username or password.'
+
+    async def test_change_user_password(self, async_client: AsyncClient, user_data_register: dict, user_data_login: dict, user_new_password_list: list):
+        response = await async_client.post(
+            '/auth/register',
+            json=user_data_register,
+        )
+
+        assert response.status_code == 201
+
+        response = await async_client.post(
+            '/auth/login',
+            data=user_data_login,
+            headers={'Content-Type': 'application/x-www-form-urlencoded'},
+        )
+
+        assert response.status_code == 200
+        assert 'access_token' in response.json()
+        assert 'refresh_token' in response.json()
+
+        for old_password, new_password, expected_status, expected_detail in user_new_password_list:
+            response = await async_client.post(
+                '/auth/change-password',
+                json={
+                    'old_password': old_password if old_password else user_data_login['password'],
+                    'new_password': new_password,
+                },
+            )
+
+            assert response.status_code == expected_status
+            assert response.json()['detail'] == expected_detail

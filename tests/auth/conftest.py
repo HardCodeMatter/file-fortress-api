@@ -55,3 +55,22 @@ def user_name_validation_list(limit: int = 10) -> list[tuple[dict, int | None, s
     ]
 
     return users[:limit]
+
+
+@pytest.fixture
+def user_new_password_list() -> list[str]:
+    passwords: list[list[str | None, str, int, str | None]] = [
+        [None, 'Clo wn 228', 400, 'Password cannot contain spaces.'],
+        [None, '', 400, 'Password must be between 8 and 32 characters in length, inclusive.'],
+        [None, 'master', 400, 'Password must be between 8 and 32 characters in length, inclusive.'],
+        [None, '124', 400, 'Password must be between 8 and 32 characters in length, inclusive.'],
+        [None, 'password123password123password123', 400, 'Password must be between 8 and 32 characters in length, inclusive.'],
+        [None, 'fortress', 400, 'Password must contain at least one uppercase letter, one lowercase letter, and one number.'],
+        [None, '12345678', 400, 'Password must contain at least one uppercase letter, one lowercase letter, and one number.'],
+        [None, 'password123', 400, 'Password must contain at least one uppercase letter, one lowercase letter, and one number.'],
+        [None, 'King1234', 400, 'New password must be different from the old password.'],
+        ['incorrectPassword', 'newPassword2024', 400, 'Old password is incorrect.'],
+        [None, 'masteR123', 200, 'Password changed successfully.'],
+    ]
+
+    return passwords
