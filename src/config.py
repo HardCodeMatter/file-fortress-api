@@ -22,6 +22,12 @@ class Settings(BaseSettings):
     AUTH_ACCESS_TOKEN_EXPIRE_MINUTES: int
     AUTH_REFRESH_TOKEN_EXPIRE_DAYS: int
 
+    AWS_ACCESS_KEY_ID: str
+    AWS_SECRET_ACCESS_KEY: str
+    AWS_BUCKET_NAME: str
+    AWS_BUCKET_REGION: str
+    AWS_S3_ENDPOINT: str
+
     @property
     def DATABASE_URL(self) -> str:
         return f'postgresql+asyncpg://{self.DATABASE_USER}:{self.DATABASE_PASS}@{self.DATABASE_HOST}:{self.DATABASE_PORT}/{self.DATABASE_NAME}'
