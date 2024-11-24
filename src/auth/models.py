@@ -1,7 +1,12 @@
-from sqlalchemy.orm import Mapped, mapped_column
+import typing
+
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from database import Base
 from models import IDMixin, TimestampMixin
+
+if typing.TYPE_CHECKING:
+    from files.models import File
 
 
 class User(IDMixin, TimestampMixin, Base):
@@ -17,6 +22,8 @@ class User(IDMixin, TimestampMixin, Base):
     is_active: Mapped[bool] = mapped_column(default=True)
     is_verified: Mapped[bool] = mapped_column(default=False)
     is_superuser: Mapped[bool] = mapped_column(default=False)
+
+    files: Mapped[list['File']] = relationship(back_populates='uploader')
 
     def __str__(self) -> str:
         return f'User(id={self.id}, username={self.username}, is_superuser={self.is_superuser})'
