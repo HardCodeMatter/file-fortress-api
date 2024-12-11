@@ -1,19 +1,14 @@
 from datetime import datetime
 from io import BytesIO
 
-from fastapi import UploadFile, File as FastAPIFile, Body, status, HTTPException, APIRouter, Depends
+from fastapi import UploadFile, status, HTTPException
 from fastapi.responses import StreamingResponse
 from sqlalchemy import select, Select
-from sqlalchemy.ext.asyncio import AsyncSession
-
-from auth.utils import get_current_active_user
 from .utils import generate_hash
 from .models import File
-from .schemas import FileCreate, FileRead
 from aws.client import s3_client
 from auth.models import User
 from service import BaseService
-from database import get_async_session
 
 
 class FileService(BaseService):
@@ -93,3 +88,49 @@ class FileService(BaseService):
             )
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))
+
+    async def get_file_by_id(self, id: str) -> File:
+        stmt: Select[File] = select(File).filter(File.id == id)
+        file: File = (
+            await self.session.execute(stmt)
+        ).scalars().first()
+
+        if not file:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f'File with ID \'{id}\' was not found.',
+            )
+
+        return file
+
+    async def get_files_by_name(self, name: str) -> list[File]:
+        stmt: Select[File] = select(File).filter(File.name.icontains(name))
+        files: list[File] = (
+            await self.session.execute(stmt)
+        ).scalars().all()
+
+        if not files:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f'Files were not found.',
+            )
+
+        return files
+
+    async def get_files_by_current_user(self, current_user: User) -> list[File]:
+        stmt: Select[list[File]] = (
+            select(File)
+            .filter(File.uploader_id == current_user.id)
+            .order_by(File.created_at.desc())
+        )
+        files: list[File] = (
+            await self.session.execute(stmt)
+        ).scalars().all()
+
+        if not files:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f'Files were not found.',
+            )
+
+        return files

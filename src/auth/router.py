@@ -33,8 +33,8 @@ async def login_for_access_token(
     access_token = create_access_token({'sub': user.username})
     refresh_token = create_refresh_token({'sub': user.username})
 
-    response.set_cookie(key='access_token', value=access_token, httponly=True, max_age=settings.AUTH_ACCESS_TOKEN_EXPIRE_MINUTES * 60)
-    response.set_cookie(key='refresh_token', value=refresh_token, httponly=True, max_age=settings.AUTH_REFRESH_TOKEN_EXPIRE_DAYS * 24 * 60 * 60)
+    response.set_cookie(key='access_token', value=access_token, httponly=True, secure=False, samesite='lax', max_age=settings.AUTH_ACCESS_TOKEN_EXPIRE_MINUTES * 60)
+    response.set_cookie(key='refresh_token', value=refresh_token, httponly=True, samesite='lax', max_age=settings.AUTH_REFRESH_TOKEN_EXPIRE_DAYS * 24 * 60 * 60)
 
     return Token(
         access_token=access_token,
@@ -84,8 +84,8 @@ async def refresh_tokens(
     access_token = create_access_token({'sub': payload['sub']})
     refresh_token = create_refresh_token({'sub': payload['sub']})
 
-    response.set_cookie(key='access_token', value=access_token, httponly=True, max_age=settings.AUTH_ACCESS_TOKEN_EXPIRE_MINUTES * 60)
-    response.set_cookie(key='refresh_token', value=refresh_token, httponly=True, max_age=settings.AUTH_REFRESH_TOKEN_EXPIRE_DAYS * 24 * 60 * 60)
+    response.set_cookie(key='access_token', value=access_token, httponly=True, samesite='lax', max_age=settings.AUTH_ACCESS_TOKEN_EXPIRE_MINUTES * 60)
+    response.set_cookie(key='refresh_token', value=refresh_token, httponly=True, samesite='lax', max_age=settings.AUTH_REFRESH_TOKEN_EXPIRE_DAYS * 24 * 60 * 60)
 
     return Token(
         access_token=access_token,
@@ -113,6 +113,22 @@ async def get_user_by_username(
     user: User = await service.UserService(session).get_user_by_username(username)
 
     if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail='User not found.',
+        )
+
+    return user
+
+
+@router.get('/users/me', status_code=status.HTTP_200_OK)
+async def get_current_user(
+    session: AsyncSession = Depends(get_async_session),
+    current_user: User = Depends(get_current_user)
+) -> UserRead:
+    user: User = await service.UserService(session).get_user_by_username(current_user.username)
+
+    if not User:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail='User not found.',

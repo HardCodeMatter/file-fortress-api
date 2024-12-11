@@ -18,6 +18,7 @@ class FileCreate(FileBase):
 
 
 class FileRead(FileBase):
+    id: str
     name: str
     size: int
     content_type: str
@@ -25,6 +26,9 @@ class FileRead(FileBase):
 
     expiration_date: datetime | None = None
     is_public: bool = False
+
+    created_at: datetime
+    updated_at: datetime
 
     downloads_count: int
     last_downloaded_at: datetime | None = None

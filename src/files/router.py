@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from database import get_async_session
 from .schemas import FileRead
 from .service import FileService
-from auth.utils import get_current_active_user
+from auth.utils import get_current_active_user, get_current_user
 from auth.models import User
 
 
@@ -39,8 +39,31 @@ async def download_file(
     filename: str | None = None,
     session: AsyncSession = Depends(get_async_session),
     current_user: User = Depends(get_current_active_user)
-):
+) -> None:
     return await FileService(session).download_file(
         storage_key=storage_key,
         filename=filename,
     )
+
+@router.get('/')
+async def get_file_by_id(
+    id: str,
+    session: AsyncSession = Depends(get_async_session),
+    current_user: User = Depends(get_current_user)
+) -> FileRead:
+    return await FileService(session).get_file_by_id(id)
+
+@router.get('/search')
+async def get_files_by_name(
+    name: str,
+    session: AsyncSession = Depends(get_async_session),
+    current_user: User = Depends(get_current_user)
+) -> list[FileRead]:
+    return await FileService(session).get_files_by_name(name)
+
+@router.get('/own')
+async def get_file_by_name(
+    session: AsyncSession = Depends(get_async_session),
+    current_user: User = Depends(get_current_user)
+) -> list[FileRead]:
+    return await FileService(session).get_files_by_current_user(current_user)
