@@ -1,9 +1,11 @@
 from datetime import datetime
 from io import BytesIO
 
-from fastapi import UploadFile, status, HTTPException
+from fastapi import UploadFile, status, HTTPException, Query
 from fastapi.responses import StreamingResponse
-from sqlalchemy import select, Select
+from sqlalchemy import select, Select, desc, asc
+
+from .schemas import FileQueryParams, OrderBy
 from .utils import generate_hash
 from .models import File
 from aws.client import s3_client
@@ -103,8 +105,30 @@ class FileService(BaseService):
 
         return file
 
-    async def get_files_by_name(self, name: str) -> list[File]:
-        stmt: Select[File] = select(File).filter(File.name.icontains(name))
+    async def get_files_by_name(self, params: FileQueryParams, name: str, skip: int = 0, limit: int = 10) -> list[File]:
+        order_by_mapping = {
+            OrderBy.name: File.name,
+            OrderBy.size: File.size,
+            OrderBy.is_public: File.is_public,
+            OrderBy.created_at: File.created_at
+        }
+
+        order_by_column = order_by_mapping[params.order_by]
+
+        if order_by_column is None:
+            raise HTTPException(
+                status_code=400,
+                detail=f'Invalid order_by field: {order_by_column}.',
+            )
+        print('\n\nORDER TO SORT!!!!!!!!: ', bool(params.descending), isinstance(params.descending, bool), '\n')
+
+        stmt: Select[File] = (
+            select(File)
+            .filter(File.name.icontains(name))
+            .order_by(desc(order_by_column) if bool(params.descending) else asc(order_by_column))
+            .offset(skip)
+            .limit(limit)
+        )
         files: list[File] = (
             await self.session.execute(stmt)
         ).scalars().all()

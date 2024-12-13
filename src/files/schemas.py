@@ -1,4 +1,4 @@
-import json
+from enum import Enum
 from datetime import datetime
 
 from pydantic import BaseModel, ConfigDict, model_validator
@@ -32,3 +32,15 @@ class FileRead(FileBase):
 
     downloads_count: int
     last_downloaded_at: datetime | None = None
+
+
+class OrderBy(Enum):
+    name: str = 'name'
+    size: str = 'size'
+    is_public: str = 'is_public'
+    created_at: str = 'created_at'
+
+
+class FileQueryParams(BaseModel):
+    order_by: OrderBy = OrderBy.created_at
+    descending: bool = False

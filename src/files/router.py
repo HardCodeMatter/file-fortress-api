@@ -4,7 +4,7 @@ from fastapi import APIRouter, UploadFile, File as FastAPIFile, Body, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from database import get_async_session
-from .schemas import FileRead
+from .schemas import FileRead, FileQueryParams
 from .service import FileService
 from auth.utils import get_current_active_user, get_current_user
 from auth.models import User
@@ -56,10 +56,13 @@ async def get_file_by_id(
 @router.get('/search')
 async def get_files_by_name(
     name: str,
+    page: int = 0,
+    limit: int = 10,
+    params: FileQueryParams = Depends(),
     session: AsyncSession = Depends(get_async_session),
     current_user: User = Depends(get_current_user)
 ) -> list[FileRead]:
-    return await FileService(session).get_files_by_name(name)
+    return await FileService(session).get_files_by_name(params, name, page, limit)
 
 @router.get('/own')
 async def get_file_by_name(
