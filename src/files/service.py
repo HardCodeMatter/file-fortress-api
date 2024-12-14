@@ -120,11 +120,13 @@ class FileService(BaseService):
                 status_code=400,
                 detail=f'Invalid order_by field: {order_by_column}.',
             )
-        print('\n\nORDER TO SORT!!!!!!!!: ', bool(params.descending), isinstance(params.descending, bool), '\n')
 
         stmt: Select[File] = (
             select(File)
-            .filter(File.name.icontains(name))
+            .filter(
+                File.name.icontains(name),
+                File.is_public == True,
+            )
             .order_by(desc(order_by_column) if bool(params.descending) else asc(order_by_column))
             .offset(skip)
             .limit(limit)
@@ -141,11 +143,31 @@ class FileService(BaseService):
 
         return files
 
-    async def get_files_by_current_user(self, current_user: User) -> list[File]:
-        stmt: Select[list[File]] = (
+    async def get_files_by_current_user(self, current_user: User, params: FileQueryParams, name: str, skip: int = 0, limit: int = 10) -> list[File]:
+        order_by_mapping = {
+            OrderBy.name: File.name,
+            OrderBy.size: File.size,
+            OrderBy.is_public: File.is_public,
+            OrderBy.created_at: File.created_at
+        }
+
+        order_by_column = order_by_mapping[params.order_by]
+
+        if order_by_column is None:
+            raise HTTPException(
+                status_code=400,
+                detail=f'Invalid order_by field: {order_by_column}.',
+            )
+
+        stmt: Select[File] = (
             select(File)
-            .filter(File.uploader_id == current_user.id)
-            .order_by(File.created_at.desc())
+            .filter(
+                File.name.icontains(name),
+                File.uploader_id == current_user.id,
+            )
+            .order_by(desc(order_by_column) if bool(params.descending) else asc(order_by_column))
+            .offset(skip)
+            .limit(limit)
         )
         files: list[File] = (
             await self.session.execute(stmt)

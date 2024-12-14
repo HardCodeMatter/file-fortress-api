@@ -66,7 +66,11 @@ async def get_files_by_name(
 
 @router.get('/own')
 async def get_file_by_name(
+    name: str,
+    page: int = 0,
+    limit: int = 10,
+    params: FileQueryParams = Depends(),
     session: AsyncSession = Depends(get_async_session),
     current_user: User = Depends(get_current_user)
 ) -> list[FileRead]:
-    return await FileService(session).get_files_by_current_user(current_user)
+    return await FileService(session).get_files_by_current_user(current_user, params, name, page, limit)
